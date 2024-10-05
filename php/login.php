@@ -24,10 +24,10 @@ $dsn = 'mysql:host=' . $db_config['host'] . ';dbname=' . $db_config['dbname'];
 $db_username = $db_config['username'];
 $db_password = $db_config['password'];
 
-// Admin credentials
+// Admin credentials (plain-text password)
 $admin_credentials = $config['admin'];
 $admin_username = $admin_credentials['username'];
-$admin_password = $admin_credentials['password'];
+$admin_password = $admin_credentials['password']; // Plain-text password
 
 $error = '';
 
@@ -38,8 +38,24 @@ try {
     die("Database connection failed: " . $e->getMessage());
 }
 
+// Create the login_logs table if it doesn't exist
+$createTableSQL = "CREATE TABLE IF NOT EXISTS login_logs (
+    id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45) NOT NULL,
+    os VARCHAR(50),
+    username VARCHAR(100),
+    status VARCHAR(10)
+)";
+try {
+    $pdo->exec($createTableSQL);
+} catch (PDOException $e) {
+    die("Table creation failed: " . $e->getMessage());
+}
+
 date_default_timezone_set('Asia/Kolkata');
 
+// Function to log login attempts
 function log_login_attempt($pdo, $username, $status) {
     $ip = $_SERVER['REMOTE_ADDR'];
     $user_agent = $_SERVER['HTTP_USER_AGENT'];
@@ -72,11 +88,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($username) || empty($password)) {
         $error = "Username and password are required.";
     } else {
+        // Verify admin credentials (plain-text comparison)
         if ($username === $admin_username && $password === $admin_password) {
             // Set session variables for the logged-in admin
-            $_SESSION['loggedin'] = true; // Indicates the user is logged in
+            $_SESSION['loggedin'] = true;
             $_SESSION['user_role'] = 'admin'; // Set the role to admin
-            
+
             log_login_attempt($pdo, $username, 'Success');
             header("Location: admin_panel.php");
             exit;
@@ -87,7 +104,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
