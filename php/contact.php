@@ -28,6 +28,25 @@ function validate_email($email) {
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
+// Create the table if it doesn't exist
+$tableName = "contact_form_submissions";
+$tableSQL = "CREATE TABLE IF NOT EXISTS $tableName (
+    id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    mobile VARCHAR(15),
+    address TEXT,
+    message TEXT NOT NULL,
+    `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+
+// Execute the table creation query
+try {
+    $pdo->exec($tableSQL);
+} catch (PDOException $e) {
+    die("Table creation failed: " . $e->getMessage());
+}
+
 // Check if the form was submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -48,7 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $timestamp = $dateTime->format('Y-m-d H:i:s');
 
     // Prepare SQL query
-    $sql = "INSERT INTO contact_form_submissions (name, email, mobile, address, message, `timestamp`) VALUES (:name, :email, :mobile, :address, :message, :timestamp)";
+    $sql = "INSERT INTO $tableName (name, email, mobile, address, message, `timestamp`) VALUES (:name, :email, :mobile, :address, :message, :timestamp)";
     $stmt = $pdo->prepare($sql);
 
     // Bind parameters and execute query
