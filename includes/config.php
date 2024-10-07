@@ -14,7 +14,7 @@ return [
         'password' => 'password'
 
     ],
-
+//I made the php scripts to automatically create two tables upon finding none to make hosting switching seamless. 
     'admin' => [
 
         'username' => 'admin-username', // admin username change as needed 
